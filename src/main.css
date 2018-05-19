@@ -1,0 +1,15 @@
+body {
+  margin: 0px 333px;
+  padding: 22;
+  font-family: sans-serif;
+}
+.app-header {
+  background-color: #333;
+  height: 77px;
+  padding: 22px;
+  color: white;
+}
+
+.app-title {
+  font-size: 2em;
+}
