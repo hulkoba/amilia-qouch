@@ -1,5 +1,4 @@
 const express = require('express')
-const http = require('http')
 const path = require('path')
 
 // Initialize http server
@@ -62,18 +61,4 @@ const fetchGif = async () => {
   console.log('fetch gif')
   // const url = await download('giphy.com/embed/oyBqefMw5zVTi')
   return 'giphy.com/embed/oyBqefMw5zVTi'
-}
-
-// File download helper
-// function that downloads a file and returns a stream
-const download = async (url) => {
-  return new Promise((resolve, reject) => {
-    let req = http.get(url.replace('https', 'http'))
-    req.on('response', res => {
-      resolve(res)
-    })
-    req.on('error', err => {
-      reject(err)
-    })
-  })
 }

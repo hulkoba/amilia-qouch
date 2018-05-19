@@ -1,15 +1,59 @@
 body {
-  margin: 0px 333px;
+  margin: 0 333px;
   padding: 22;
   font-family: sans-serif;
 }
 .app-header {
   background-color: #333;
-  height: 77px;
-  padding: 22px;
+  padding: 18px;
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .app-title {
-  font-size: 2em;
+  margin: 0;
+}
+.app-title > button {
+  font-size: 0.8em;
+  margin-left: 33px;
+}
+
+.add-btn {
+  cursor: pointer;
+  font-size: 1.3em;
+  background-color: white;
+  border: 2px solid green;
+  color: green;
+  padding: 6px 12px;
+}
+.red {
+  color: red;
+}
+.green {
+  color: green;
+}
+
+.contact-list {
+  padding-left: 0;
+  margin: 0;
+}
+.contact-list-li {
+  border: 1px solid #333;
+  border-top: none;
+  padding: 22px 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-btns > button {
+  cursor: pointer;
+  margin-left: 11px;
+  background-color: white;
+  border: 2px solid #333;
+  color: #333;
+  padding: 3px 6px;
+  min-width: 60px;
 }
