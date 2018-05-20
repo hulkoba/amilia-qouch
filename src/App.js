@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Offline, Online } from 'react-detect-offline'
 
 import ContactList from './components/ContactList'
+import ContactForm from './components/ContactForm'
 import './main.css'
 
 const API = 'http://127.0.0.1:1312'
@@ -11,7 +12,8 @@ class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      contact: null,
+      editView: false,
+      contact: '',
       contacts: [{
         name: 'Amilia Pond',
         id: 11,
@@ -44,12 +46,19 @@ class App extends Component {
     }
   }
 
-  // addContact(val) {
-  //   const contact = { name: val, id: window.id++ }
+  addContact(contact) {
+    console.log('### contact', contact)
+    // const contact = { name: val, id: window.id++ }
 
-  //   this.state.contacts.push(contact)
-  //   this.setState(() => { contacts: this.state.contacts })
-  // }
+    // this.state.contacts.push(contact)
+    // this.setState(() => { contacts: this.state.contacts })
+    this.setState(() => {
+      return {
+        contact: contact,
+        editView: false
+      }
+    })
+  }
 
   // handleRemove(id) {
   //   // Filter all contacts except the one to be removed
@@ -61,6 +70,12 @@ class App extends Component {
   // }
   goToEdit (contact) {
     console.log('### edit contact', contact)
+    this.setState(() => {
+      return {
+        editView: true,
+        contact: contact.id ? contact : {name:'', email: '', phone: ''}
+      }
+    })
   }
   deleteContact (contactID) {
     console.log('### delete contact', contactID)
@@ -73,20 +88,29 @@ class App extends Component {
         <header className='app-header'>
           <h1 className='app-title'>
             <Online>
-              <div>Hello cat <span className='green'>you're online</span></div>
+              <div>Hello cat, <span className='green'>you're online</span></div>
             </Online>
             <Offline>
-              <div>Hello cat <span className='red'>you're offline</span></div>
+              <div>Hello cat, <span className='red'>you're offline</span></div>
             </Offline>
           </h1>
-          <button className='add-btn' onClick={this.goToEdit.bind(this)}>Add a cat</button>
+          {!this.state.editView &&
+          <button
+            className='add-btn'
+            onClick={this.goToEdit.bind(this)}>Add a cat
+          </button>}
         </header>
-
+        {this.state.editView ?
+        <ContactForm
+          addOrEditContact={this.addContact.bind(this)}
+          contact={this.state.contact} />
+        :
         <ContactList
           contacts={this.state.contacts}
           handleOnEditClick={this.goToEdit.bind(this)}
           handleOnDeleteClick={this.deleteContact.bind(this)}
         />
+        }
       </div>
     )
   }

@@ -57,3 +57,16 @@ body {
   padding: 3px 6px;
   min-width: 60px;
 }
+
+.contact-form {
+  border: 1px solid #333;
+  padding: 44px 77px;
+}
+
+.contact-form > p > input {
+ width: 333px;
+}
+.contact-form > p > label {
+    float:left;
+    width: 111px;
+}
