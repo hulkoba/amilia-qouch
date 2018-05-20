@@ -142,6 +142,7 @@ class App extends Component {
         {this.state.editView ?
         <ContactForm
           addOrEditContact={this.addContact.bind(this)}
+          handleCancel={() => {this.setState(() => ({editView: false}))}}
           contact={this.state.contact} />
         :
         <ContactList

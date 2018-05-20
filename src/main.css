@@ -67,6 +67,16 @@ body {
  width: 333px;
 }
 .contact-form > p > label {
-    float:left;
-    width: 111px;
+  float:left;
+  width: 111px;
+}
+
+.footer > button {
+  width: 220px;
+  font-size: 1.3em;
+  margin: 22px 22px 0 0;
+  padding: 6px 12px;
+}
+.footer > button[type='submit'] {
+  background-color: gold;
 }
