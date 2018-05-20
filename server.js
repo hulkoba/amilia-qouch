@@ -6,6 +6,7 @@ const path = require('path')
 const db = PouchDB('db')
 const app = express()
 
+// TODO need to configute the path
 app.use(express.static(path.join(__dirname, 'client', 'public')))
 app.use(bodyParser.json())
 
@@ -51,7 +52,7 @@ app.post('/contacts', function (req, res) {
     if (doc !== undefined) res.status(400).send({msg: 'contact already exists.'})
 
     contact.type = 'contact'
-    // contact._id = id
+    contact._id = id
 
     db.put(contact, function (err, contact) {
       if (err) res.status(500).send({ msg: err })

@@ -1,12 +1,13 @@
 import React, { Component } from 'react'
 import { Offline, Online } from 'react-detect-offline'
+import PouchDB from 'pouchdb'
 
 import ContactList from './components/ContactList'
 import ContactForm from './components/ContactForm'
 import './main.css'
 
-const API = 'http://127.0.0.1:1312'
-
+const localDB = new PouchDB('contacts')
+const remoteDB = new PouchDB('http://localhost:15984/contacts')
 
 class App extends Component {
   constructor(props) {
@@ -16,93 +17,100 @@ class App extends Component {
       contact: '',
       contacts: []
     }
+
+    localDB.info().then(function (info) {
+      console.log('localDB ', info);
+    })
+    remoteDB.info().then(function (info) {
+      console.log(info);
+    })
+
   }
 
   componentDidMount () {
-    this.fetchContacts()
-    .then(res => this.setState({ contacts: res }))
-    .catch(err => console.log(err))
-  }
-
-  // --------------------   API section   ----------------------------
-  fetchContacts = async () => {
-    try {
-      const response = await fetch(`${API}/contacts`)
-      const body = await response.json()
-      return body
-    } catch (error) { console.log(error) }
-  }
-
-  postContact = async (contact) => {
-    console.log('### post contact', contact)
-    const body = JSON.stringify(contact)
-    try {
-      const result = await fetch(`${API}/contacts`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: body
+    this.getPouchDocs()
+    localDB.sync(remoteDB, {
+      live: true,
+      since: 'now',
+      // retry: true
+    }).on('change', change => {
+        console.log('something changed!')
+        this.getPouchDocs()
       })
-      const res = await result.json()
-      console.log(res)
-    } catch (error) { console.log(error) }
+      .on('paused', info => console.log('replication paused.'))
+      .on('complete', info => console.log('yay, we are in sync!'))
+      .on('active', info => console.log('replication resumed.'))
+      .on('denied', info => console.log('+++ ERROR ERROR ERROR +++ DENIED'))
+      .on('error', err => console.log('uh oh! an error occured.', err))
+
+    console.log('### remoteDB', remoteDB)
   }
 
-  editContact = async (contact) => {
-    console.log('### eid contact', contact)
-    const body = JSON.stringify(contact)
-    console.log('### body', body)
-    try {
-      const result = await fetch(`${API}/contacts/${contact.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: body
-      })
-      const res = await result.json()
-      console.log(res)
-    } catch (error) { console.log(error) }
+  // --------------------   Pouch section  ---------------------------
+  getPouchDocs = () => {
+    localDB.allDocs({
+      include_docs: true
+    }).then(response => {
+      const contacts = response.rows.map(c => c.doc)
+      console.log('getting updated '+ contacts.length +' contacts from PouchDB.')
+      this.setState(() => ({contacts: contacts}))
+    })
   }
 
-  removeContact = async (id) => {
-    console.log('### removeContact contact', id)
-    try {
-      await fetch(`${API}/contacts/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      })
-    } catch (error) { console.log(error) }
+  addPouchDoc = (contact) => {
+    const c = {
+      ...contact,
+      id: new Date().toISOString(),
+      type: 'contact'
+    };
+    localDB.post(c).then(response => {
+      console.log(c.name + " added to PouchDB.")
+      this.getPouchDocs()
+    }).catch(err => {
+      console.log(err)
+    })
   }
-  // --------------------   API section end  -------------------------
+
+  editPouchDoc = (contact) => {
+    localDB.get(contact._id).then(function (doc) {
+      doc = {...contact}
+      // put them back
+      return localDB.put(doc)
+    }).then(res => {
+      // fetch contacts again
+      this.getPouchDocs()
+    }).catch(err => {
+      console.log(err)
+    })
+  }
+
+  delPouchDoc = (contact) => {
+    // localDB.remove(contact)
+    localDB.get(contact._id).then(doc => {
+      console.log('### doc', doc)
+      doc._deleted = true;
+      return localDB.remove(doc);
+    }).then(result => {
+      console.log(contact.name + " gets deleted")
+      this.getPouchDocs()
+    }).catch(err => console.log(err))
+  }
+  // --------------------   Pouch section end  -------------------------
 
   // add or edit contact
   addContact (contact) {
     console.log('### add or edit contact', contact)
-    let newContacts
-    // add a new contact
+
     if(!contact.id) {
-      contact.id = Date.now().toString()
-      newContacts = this.state.contacts.concat(contact)
-
-      this.postContact(contact)
-
-      // find and replace contact
+      this.addPouchDoc(contact)
     } else {
-      newContacts = this.state.contacts.map(c => {
-        if (c.id === contact.id) return contact
-        return c
-      })
-      this.editContact(contact)
+      this.editPouchDoc(contact)
     }
 
-    this.setState(() => {
-      return {
-        contacts: newContacts,
-        editView: false
-      }
-    })
+    this.setState(() => ({editView: false}))
   }
 
   goToEdit (contact) {
-    console.log('### edit contact', contact)
     this.setState(() => {
       return {
         editView: true,
@@ -111,14 +119,10 @@ class App extends Component {
     })
   }
 
-  deleteContact (id) {
-    console.log('### delete contact', id)
-    // Filter all contacts except the one to be removed
-    const remainder = this.state.contacts.filter(contact => contact.id !== id)
+  deleteContact (contact) {
+    console.log('### delete contact', contact)
 
-    this.setState(() => ({ contacts: remainder }))
-    // TODO: delete on Server
-    this.removeContact(id)
+    this.delPouchDoc(contact)
   }
 
   render () {

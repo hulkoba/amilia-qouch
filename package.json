@@ -32,6 +32,5 @@
   "bugs": {
     "url": "https://github.com/hulkoba/amilia-qouch/issues"
   },
-  "homepage": "https://github.com/hulkoba/amilia-qouch#readme",
-  "proxy": "http://localhost:1312"
+  "homepage": "https://github.com/hulkoba/amilia-qouch#readme"
 }
