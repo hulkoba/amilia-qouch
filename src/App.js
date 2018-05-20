@@ -14,60 +14,49 @@ class App extends Component {
     this.state = {
       editView: false,
       contact: '',
-      contacts: [{
-        name: 'Amilia Pond',
-        id: 11,
-        email: 'amilia@pond.com',
-        phone: '34567899876'
-      }, {
-          name: 'Doctor Who',
-          id: 22,
-          email: 'doctor@who.com',
-          phone: '34567899876'
-        }]
+      contacts: []
     }
   }
 
   componentDidMount () {
     this.fetchContacts()
-    .then(res => this.setState({ contact: res.gif }))
+    .then(res => this.setState({ contacts: res.contacts }))
     .catch(err => console.log(err))
   }
 
   fetchContacts = async () => {
     try {
-      const response = await fetch(`${API}/gif`)
+      const response = await fetch(`${API}/`)
       const body = await response.json()
 
       return body
-
-    } catch (error) {
-      console.log(error)
-    }
+    } catch (error) { console.log(error) }
   }
 
+  // add or edit contact
   addContact(contact) {
-    console.log('### contact', contact)
-    // const contact = { name: val, id: window.id++ }
-
-    // this.state.contacts.push(contact)
-    // this.setState(() => { contacts: this.state.contacts })
+    console.log('### add or edit contact', contact)
+    let newContacts
+    // add a new contact
+    if(!contact.id) {
+      contact.id = Date.now()
+      newContacts = this.state.contacts.concat(contact)
+    // find and replace contact
+    } else {
+      newContacts = this.state.contacts.map(c => {
+        if (c.id === contact.id) return contact
+        return c
+      })
+    }
     this.setState(() => {
       return {
-        contact: contact,
+        contacts: newContacts,
         editView: false
       }
     })
+    // TODO send it to Server
   }
 
-  // handleRemove(id) {
-  //   // Filter all contacts except the one to be removed
-  //   const remainder = this.state.contacts.filter((contact) => {
-  //     if (contact.id !== id) return contact;
-  //   });
-
-  //   this.setState(() => { contacts: remainder });
-  // }
   goToEdit (contact) {
     console.log('### edit contact', contact)
     this.setState(() => {
@@ -77,12 +66,16 @@ class App extends Component {
       }
     })
   }
-  deleteContact (contactID) {
-    console.log('### delete contact', contactID)
+  deleteContact (id) {
+    console.log('### delete contact', id)
+    // Filter all contacts except the one to be removed
+    const remainder = this.state.contacts.filter(contact => contact.id !== id)
+
+    this.setState(() => ({ contacts: remainder }))
+    // TODO: delete on Server
   }
 
   render () {
-    console.log(this.state)
     return (
       <div className='app'>
         <header className='app-header'>
