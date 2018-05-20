@@ -20,41 +20,85 @@ class App extends Component {
 
   componentDidMount () {
     this.fetchContacts()
-    .then(res => this.setState({ contacts: res.contacts }))
+    .then(res => this.setState({ contacts: res }))
     .catch(err => console.log(err))
   }
 
+  // --------------------   API section   ----------------------------
   fetchContacts = async () => {
     try {
-      const response = await fetch(`${API}/`)
+      const response = await fetch(`${API}/contacts`)
       const body = await response.json()
-
       return body
     } catch (error) { console.log(error) }
   }
 
+  postContact = async (contact) => {
+    console.log('### post contact', contact)
+    const body = JSON.stringify(contact)
+    try {
+      const result = await fetch(`${API}/contacts`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: body
+      })
+      const res = await result.json()
+      console.log(res)
+    } catch (error) { console.log(error) }
+  }
+
+  editContact = async (contact) => {
+    console.log('### eid contact', contact)
+    const body = JSON.stringify(contact)
+    console.log('### body', body)
+    try {
+      const result = await fetch(`${API}/contacts/${contact.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: body
+      })
+      const res = await result.json()
+      console.log(res)
+    } catch (error) { console.log(error) }
+  }
+
+  removeContact = async (id) => {
+    console.log('### removeContact contact', id)
+    try {
+      await fetch(`${API}/contacts/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      })
+    } catch (error) { console.log(error) }
+  }
+  // --------------------   API section end  -------------------------
+
   // add or edit contact
-  addContact(contact) {
+  addContact (contact) {
     console.log('### add or edit contact', contact)
     let newContacts
     // add a new contact
     if(!contact.id) {
-      contact.id = Date.now()
+      contact.id = Date.now().toString()
       newContacts = this.state.contacts.concat(contact)
-    // find and replace contact
+
+      this.postContact(contact)
+
+      // find and replace contact
     } else {
       newContacts = this.state.contacts.map(c => {
         if (c.id === contact.id) return contact
         return c
       })
+      this.editContact(contact)
     }
+
     this.setState(() => {
       return {
         contacts: newContacts,
         editView: false
       }
     })
-    // TODO send it to Server
   }
 
   goToEdit (contact) {
@@ -66,6 +110,7 @@ class App extends Component {
       }
     })
   }
+
   deleteContact (id) {
     console.log('### delete contact', id)
     // Filter all contacts except the one to be removed
@@ -73,6 +118,7 @@ class App extends Component {
 
     this.setState(() => ({ contacts: remainder }))
     // TODO: delete on Server
+    this.removeContact(id)
   }
 
   render () {

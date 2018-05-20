@@ -8,6 +8,7 @@
     "express": "^4.16.3",
     "giphy-api": "^1.2.7",
     "path": "^0.12.7",
+    "pouchdb": "^6.4.3",
     "react": "^16.3.2",
     "react-detect-offline": "^2.0.1",
     "react-dom": "^16.3.2"
