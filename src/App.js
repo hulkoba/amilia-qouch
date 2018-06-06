@@ -10,7 +10,7 @@ const localDB = new PouchDB('contacts')
 const remoteDB = new PouchDB('http://localhost:15984/contacts')
 
 class App extends Component {
-  constructor(props) {
+  constructor (props) {
     super(props)
     this.state = {
       editView: false,
@@ -19,24 +19,23 @@ class App extends Component {
     }
 
     localDB.info().then(function (info) {
-      console.log('localDB ', info);
+      console.log('localDB ', info)
     })
     remoteDB.info().then(function (info) {
-      console.log(info);
+      console.log(info)
     })
-
   }
 
   componentDidMount () {
     this.getPouchDocs()
     localDB.sync(remoteDB, {
       live: true,
-      since: 'now',
+      since: 'now'
       // retry: true
     }).on('change', change => {
-        console.log('something changed!')
-        this.getPouchDocs()
-      })
+      console.log('something changed!')
+      this.getPouchDocs()
+    })
       .on('paused', info => console.log('replication paused.'))
       .on('complete', info => console.log('yay, we are in sync!'))
       .on('active', info => console.log('replication resumed.'))
@@ -47,31 +46,31 @@ class App extends Component {
   }
 
   // --------------------   Pouch section  ---------------------------
-  getPouchDocs = () => {
+  getPouchDocs () {
     localDB.allDocs({
       include_docs: true
     }).then(response => {
       const contacts = response.rows.map(c => c.doc)
-      console.log('getting updated '+ contacts.length +' contacts from PouchDB.')
+      console.log('getting updated ' + contacts.length + ' contacts from PouchDB.')
       this.setState(() => ({contacts: contacts}))
     })
   }
 
-  addPouchDoc = (contact) => {
+  addPouchDoc (contact) {
     const c = {
       ...contact,
       id: new Date().toISOString(),
       type: 'contact'
-    };
+    }
     localDB.post(c).then(response => {
-      console.log(c.name + " added to PouchDB.")
+      console.log(c.name + ' added to PouchDB.')
       this.getPouchDocs()
     }).catch(err => {
       console.log(err)
     })
   }
 
-  editPouchDoc = (contact) => {
+  editPouchDoc (contact) {
     localDB.get(contact._id).then(function (doc) {
       doc = {...contact}
       // put them back
@@ -84,14 +83,14 @@ class App extends Component {
     })
   }
 
-  delPouchDoc = (contact) => {
+  delPouchDoc (contact) {
     // localDB.remove(contact)
     localDB.get(contact._id).then(doc => {
       console.log('### doc', doc)
-      doc._deleted = true;
-      return localDB.remove(doc);
+      doc._deleted = true
+      return localDB.remove(doc)
     }).then(result => {
-      console.log(contact.name + " gets deleted")
+      console.log(contact.name + ' gets deleted')
       this.getPouchDocs()
     }).catch(err => console.log(err))
   }
@@ -101,7 +100,7 @@ class App extends Component {
   addContact (contact) {
     console.log('### add or edit contact', contact)
 
-    if(!contact.id) {
+    if (!contact.id) {
       this.addPouchDoc(contact)
     } else {
       this.editPouchDoc(contact)
@@ -114,7 +113,7 @@ class App extends Component {
     this.setState(() => {
       return {
         editView: true,
-        contact: contact.id ? contact : {name:'', email: '', phone: ''}
+        contact: contact.id ? contact : {name: '', email: '', phone: ''}
       }
     })
   }
@@ -143,17 +142,16 @@ class App extends Component {
             onClick={this.goToEdit.bind(this)}>Add a cat
           </button>}
         </header>
-        {this.state.editView ?
-        <ContactForm
-          addOrEditContact={this.addContact.bind(this)}
-          handleCancel={() => {this.setState(() => ({editView: false}))}}
-          contact={this.state.contact} />
-        :
-        <ContactList
-          contacts={this.state.contacts}
-          handleOnEditClick={this.goToEdit.bind(this)}
-          handleOnDeleteClick={this.deleteContact.bind(this)}
-        />
+        {this.state.editView
+          ? <ContactForm
+            addOrEditContact={this.addContact.bind(this)}
+            handleCancel={() => { this.setState(() => ({editView: false})) }}
+            contact={this.state.contact} />
+          : <ContactList
+            contacts={this.state.contacts}
+            handleOnEditClick={this.goToEdit.bind(this)}
+            handleOnDeleteClick={this.deleteContact.bind(this)}
+          />
         }
       </div>
     )
