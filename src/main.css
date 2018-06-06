@@ -80,3 +80,9 @@ body {
 .footer > button[type='submit'] {
   background-color: gold;
 }
+
+@media (max-width: 1500px) {
+  body {
+    margin: 22px;
+  }
+}

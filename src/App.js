@@ -1,10 +1,9 @@
 import React, { Component } from 'react'
-import { Offline, Online } from 'react-detect-offline'
 import PouchDB from 'pouchdb'
 
+import Header from './components/Header'
 import ContactList from './components/ContactList'
 import ContactForm from './components/ContactForm'
-import './main.css'
 
 const localDB = new PouchDB('contacts')
 const remoteDB = new PouchDB('http://localhost:15984/contacts')
@@ -126,22 +125,8 @@ class App extends Component {
 
   render () {
     return (
-      <div className='app'>
-        <header className='app-header'>
-          <h1 className='app-title'>
-            <Online>
-              <div>Hello cat, <span className='green'>you're online</span></div>
-            </Online>
-            <Offline>
-              <div>Hello cat, <span className='red'>you're offline</span></div>
-            </Offline>
-          </h1>
-          {!this.state.editView &&
-          <button
-            className='add-btn'
-            onClick={this.goToEdit.bind(this)}>Add a cat
-          </button>}
-        </header>
+      <div>
+        <Header editView={this.state.editView} handleGoToEdit={this.goToEdit.bind(this)} />
         {this.state.editView
           ? <ContactForm
             addOrEditContact={this.addContact.bind(this)}
