@@ -34,6 +34,9 @@ body {
 .green {
   color: green;
 }
+.yellow {
+  color: gold;
+}
 
 .contact-list {
   padding-left: 0;
@@ -76,9 +79,13 @@ body {
   font-size: 1.3em;
   margin: 22px 22px 0 0;
   padding: 6px 12px;
+  border-color: green;
+  color: green;
 }
 .footer > button[type='submit'] {
-  background-color: gold;
+  background-color: green;
+  color: white;
+  border-color: green;
 }
 
 @media (max-width: 1500px) {

@@ -3,7 +3,7 @@ import { Offline, Online } from 'react-detect-offline'
 
 import '../main.css'
 
-const Header = ({editView, handleGoToEdit}) => (
+const Header = ({isOpen, handleGoToEdit}) => (
   <header className='app-header'>
     <h1 className='app-title'>
       <Online>
@@ -13,10 +13,10 @@ const Header = ({editView, handleGoToEdit}) => (
         <div>Hello cat, <span className='red'>you're offline</span></div>
       </Offline>
     </h1>
-    {!editView &&
+    {!isOpen &&
       <button
         className='add-btn'
-        onClick={handleGoToEdit.bind(this)}>Add a cat
+        onClick={handleGoToEdit}>Add a cat
       </button>}
   </header>
 )
