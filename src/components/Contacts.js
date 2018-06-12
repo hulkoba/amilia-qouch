@@ -43,8 +43,9 @@ class Contacts extends Component {
       .on('denied', info => console.log('+++ ERROR ERROR ERROR +++ DENIED'))
       .on('error', err => console.log('uh oh! an error occured.', err))
 
-    console.log('### remoteDB', remoteDB)
     this.toggleEdit = this.toggleEdit.bind(this)
+    this.addContact = this.addContact.bind(this)
+    this.deleteContact = this.deleteContact.bind(this)
   }
 
   // --------------------   Pouch section  ---------------------------
@@ -108,16 +109,19 @@ class Contacts extends Component {
       this.editPouchDoc(contact)
     }
 
-    this.setState(() => ({
-      editView: { isOpen: false }
-    }))
+    // go back to listView
+    this.toggleEdit()
+  }
+
+  deleteContact (contact) {
+    console.log('### delete contact', contact)
+    this.delPouchDoc(contact)
   }
 
   toggleEdit (contact) {
-    console.log('### contact', contact)
     if (!contact) {
       contact = { name: '', email: '', phone: '' }
-    }  
+    }
 
     this.setState(prevState => {
       return {
@@ -127,12 +131,6 @@ class Contacts extends Component {
         }
       }
     })
-    console.log('### this.state.editView.isOpen', this.state.editView.isOpen)
-  }
-
-  deleteContact (contact) {
-    console.log('### delete contact', contact)
-    this.delPouchDoc(contact)
   }
 
   render () {
@@ -144,16 +142,17 @@ class Contacts extends Component {
           handleGoToEdit={this.toggleEdit.bind(this, null)} />
 
         {editView.isOpen
-        ? <ContactForm
-          addOrEditContact={this.addContact.bind(this)}
-          handleCancel={this.toggleEdit.bind(this, null)}
-          contact={editView.contact} />
+          ? <ContactForm
+            addOrEditContact={this.addContact}
+            handleCancel={this.toggleEdit.bind(this, null)}
+            contact={editView.contact} />
 
-        : <ContactList
+          : <ContactList
             contacts={contacts}
             handleOnEditClick={this.toggleEdit}
-            handleOnDeleteClick={this.deleteContact.bind(this)}
-          />}
+            handleOnDeleteClick={this.deleteContact}
+          />
+        }
       </div>
     )
   }
