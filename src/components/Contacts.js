@@ -7,6 +7,7 @@ import ContactForm from './ContactForm'
 
 const localDB = new PouchDB('contacts')
 const remoteDB = new PouchDB('http://localhost:15984/contacts')
+// const remoteDB = new PouchDB('https://admin:d<3j@127.0.0.1:15984/contacts')
 
 class Contacts extends Component {
   constructor (props) {
