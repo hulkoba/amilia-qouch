@@ -41,8 +41,8 @@ class Contacts extends Component {
       .on('paused', info => console.log('replication paused.'))
       .on('complete', info => console.log('yay, we are in sync!'))
       .on('active', info => console.log('replication resumed.'))
-      .on('denied', info => console.log('+++ ERROR ERROR ERROR +++ DENIED'))
-      .on('error', err => console.log('uh oh! an error occured.', err))
+      .on('denied', info => console.log('+++ DENIED +++', info))
+      .on('error', err => console.log('+++ ERROR ERROR ERROR +++.', err))
 
     this.toggleEdit = this.toggleEdit.bind(this)
     this.addContact = this.addContact.bind(this)
@@ -50,63 +50,52 @@ class Contacts extends Component {
   }
 
   // --------------------   Pouch section  ---------------------------
-  getPouchDocs () {
-    localDB.allDocs({
-      include_docs: true
-    }).then(response => {
-      const contacts = response.rows.map(c => c.doc)
-      console.log('getting updated ' + contacts.length + ' contacts from PouchDB.')
-      this.setState(() => ({contacts: contacts}))
-    })
+  async getPouchDocs () {
+    const completeContacts = await localDB.allDocs({include_docs: true})
+    const contacts = completeContacts.rows.map(c => c.doc)
+    console.log('getting ' + contacts.length + ' contacts from PouchDB.')
+    this.setState(() => ({
+      contacts
+    }))
   }
 
-  addPouchDoc (contact) {
+  async addPouchDoc (contact) {
     const c = {
       ...contact,
       id: new Date().toISOString(),
       type: 'contact'
     }
-    localDB.post(c).then(response => {
-      console.log(c.name + ' added to PouchDB.')
-      this.getPouchDocs()
-    }).catch(err => {
-      console.log(err)
-    })
+    await localDB.post(c)
+    console.log(c.name + ' added to PouchDB.')
+    this.getPouchDocs()
   }
 
-  editPouchDoc (contact) {
-    localDB.get(contact._id).then(function (doc) {
-      doc = {...contact}
-      // put them back
-      return localDB.put(doc)
-    }).then(res => {
-      // fetch contacts again
-      this.getPouchDocs()
-    }).catch(err => {
-      console.log(err)
-    })
+  async editPouchDoc (contact) {
+    let doc = localDB.get(contact._id)
+    doc = {...contact}
+    await localDB.put(doc)
+
+    console.log(doc.name + ' edited in PouchDB.')
+    this.getPouchDocs()
   }
 
-  delPouchDoc (contact) {
+  async deletePouchDoc (contact) {
     // localDB.remove(contact)
-    localDB.get(contact._id).then(doc => {
-      console.log('### doc', doc)
-      doc._deleted = true
-      return localDB.remove(doc)
-    }).then(result => {
-      console.log(contact.name + ' gets deleted')
-      this.getPouchDocs()
-    }).catch(err => console.log(err))
+    const doc = await localDB.get(contact._id)
+    doc._deleted = true
+    await localDB.put(doc)
+    console.log(contact.name + ' gets deleted')
+    this.getPouchDocs()
   }
   // --------------------   Pouch section end  -------------------------
 
   // add or edit contact
   addContact (contact) {
-    console.log('### add or edit contact', contact)
-
     if (!contact.id) {
+      console.log('### add contact', contact)
       this.addPouchDoc(contact)
     } else {
+      console.log('### edit contact', contact)
       this.editPouchDoc(contact)
     }
 
@@ -116,7 +105,7 @@ class Contacts extends Component {
 
   deleteContact (contact) {
     console.log('### delete contact', contact)
-    this.delPouchDoc(contact)
+    this.deletePouchDoc(contact)
   }
 
   toggleEdit (contact) {
