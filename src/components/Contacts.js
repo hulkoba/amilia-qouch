@@ -6,7 +6,11 @@ import ContactList from './ContactList'
 import ContactForm from './ContactForm'
 
 const localDB = new PouchDB('contacts')
-const remoteDB = new PouchDB('http://localhost:15984/contacts')
+const remoteDB = new PouchDB('http://localhost:15984/contacts',
+  { skip_setup: true,
+    username: 'admin',
+    password: 'd<3j'
+  })
 // const remoteDB = new PouchDB('https://admin:d<3j@127.0.0.1:15984/contacts')
 
 class Contacts extends Component {
@@ -32,7 +36,8 @@ class Contacts extends Component {
     this.getPouchDocs()
     localDB.sync(remoteDB, {
       live: true,
-      since: 'now'
+      since: 'now',
+      include_docs: true
       // retry: true
     }).on('change', change => {
       console.log('something changed!')
@@ -51,32 +56,60 @@ class Contacts extends Component {
 
   // --------------------   Pouch section  ---------------------------
   async getPouchDocs () {
-    const completeContacts = await localDB.allDocs({include_docs: true})
-    const contacts = completeContacts.rows.map(c => c.doc)
-    console.log('getting ' + contacts.length + ' contacts from PouchDB.')
-    this.setState(() => ({
-      contacts
-    }))
+    try {
+      const completeContacts = await localDB.allDocs({
+        include_docs: true,
+        conflicts: true // include conflict information in the _conflicts field of a doc.
+      })
+      const contacts = completeContacts.rows.map(c => c.doc)
+      console.log('getting ' + contacts.length + ' contacts from PouchDB.')
+
+      this.setState((prevState) => {
+        if (prevState.contacts !== contacts) {
+          return { contacts }
+        }
+      })
+    } catch (err) {
+      if (err.message === 'Document update conflict') {
+        // TODO: show Modal
+      }
+      console.log(err)
+    }
   }
 
   async addPouchDoc (contact) {
     const c = {
       ...contact,
-      id: new Date().toISOString(),
-      type: 'contact'
+      _id: new Date().toISOString()
     }
-    await localDB.post(c)
-    console.log(c.name + ' added to PouchDB.')
-    this.getPouchDocs()
+    try {
+      await localDB.put({
+        ...contact,
+        _id: new Date().toISOString()
+      })
+      console.log(c.name + ' added to PouchDB.')
+      this.getPouchDocs()
+    } catch (err) {
+      if (err.message === 'Document update conflict') {
+        // TODO: show Modal
+      }
+      console.log(err)
+    }
   }
 
   async editPouchDoc (contact) {
-    let doc = localDB.get(contact._id)
-    doc = {...contact}
-    await localDB.put(doc)
-
-    console.log(doc.name + ' edited in PouchDB.')
-    this.getPouchDocs()
+    try {
+      let doc = await localDB.get(contact._id)
+      doc = {...contact}
+      await localDB.put(doc)
+      console.log(doc.name + ' edited in PouchDB.')
+      this.getPouchDocs()
+    } catch (err) {
+      if (err.message === 'Document update conflict') {
+        // TODO: show Modal
+      }
+      console.log(err)
+    }
   }
 
   async deletePouchDoc (contact) {
@@ -91,7 +124,7 @@ class Contacts extends Component {
 
   // add or edit contact
   addContact (contact) {
-    if (!contact.id) {
+    if (!contact._id) {
       console.log('### add contact', contact)
       this.addPouchDoc(contact)
     } else {
