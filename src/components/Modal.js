@@ -13,7 +13,7 @@ const Modal = ({contactMe, contactYou, chooseRev}) => (
       <p>Eingehende Änderung</p>
       <button
         className='rev-btn blue'
-        onClick={chooseRev.bind(this, contactMe)}>
+        onClick={this.chooseRev.bind(this, contactMe)}>
         <p>Kontakt: {JSON.stringify(contactYou)}</p>
       </button>
     </div>
@@ -22,7 +22,7 @@ const Modal = ({contactMe, contactYou, chooseRev}) => (
       <p>Deine Änderung</p>
       <button
         className='rev-btn lila'
-        onClick={chooseRev.bind(this, contactYou)}>
+        onClick={this.chooseRev.bind(this, contactYou)}>
         <p>Kontakt: {JSON.stringify(contactMe)}</p>
       </button>
     </div>
