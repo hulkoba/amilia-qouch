@@ -61,6 +61,28 @@ body {
   min-width: 60px;
 }
 
+.rev-a, .rev-b {
+  margin-top: 33px;
+}
+.rev-btn {
+  cursor: pointer;
+  color: white;
+  border: 2px solid;
+  padding: 3px 6px;
+  width: 100%;
+}
+.blue {
+  background-color: deepskyblue;
+  border-color: deepskyblue;
+}
+.lila {
+  background-color: gold;
+  border-color: gold;
+}
+.rev-btn > p {
+  font-size: 16pt;
+}
+
 .contact-form {
   border: 1px solid #333;
   padding: 44px 77px;
@@ -88,6 +110,20 @@ body {
   border-color: green;
 }
 
+.modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 7px red solid;
+  background-color: white;
+  z-index: 111;
+  overflow: hidden;
+  outline: 0;
+  padding: 22px;
+  width: 77vw;
+  margin: 0 auto;
+}
 @media (max-width: 1500px) {
   body {
     margin: 22px;

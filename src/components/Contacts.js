@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import PouchDB from 'pouchdb'
 
 import Header from './Header'
+import Modal from './Modal'
 import ContactList from './ContactList'
 import ContactForm from './ContactForm'
 
@@ -94,7 +95,9 @@ class Contacts extends Component {
 
   async editPouchDoc (contact) {
     try {
-      let doc = await localDB.get(contact._id)
+      let doc = await localDB.get(contact._id, {
+        conflicts: true // include conflict information in the _conflicts field of a doc.
+      })
       doc = {...contact}
       await localDB.put(doc)
       console.log(doc.name + ' edited in PouchDB.')
@@ -136,6 +139,13 @@ class Contacts extends Component {
     this.deletePouchDoc(contact)
   }
 
+  chooseRevA (contact) {
+    console.log('### choose rev a ', contact)
+  }
+  chooseRevB (contact) {
+    console.log('### choose rev b ', contact)
+  }
+
   toggleEdit (contact) {
     if (!contact) {
       contact = { name: '', email: '', phone: '' }
@@ -158,6 +168,11 @@ class Contacts extends Component {
         <Header
           isOpen={editView.isOpen}
           handleGoToEdit={this.toggleEdit.bind(this, null)} />
+
+        <Modal
+          contact={{ name: 'test', email: 'zuzu', phone: '1234' }}
+          chooseRevA={this.chooseRevA}
+          chooseRevB={this.chooseRevB} />
 
         {editView.isOpen
           ? <ContactForm
