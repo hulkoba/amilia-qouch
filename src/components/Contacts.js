@@ -17,6 +17,11 @@ class Contacts extends Component {
         isOpen: false,
         contact: ''
       },
+      modalView: {
+        hasConflict: false,
+        revA: '',
+        revB: ''
+      },
       contacts: []
     }
 
@@ -139,11 +144,27 @@ class Contacts extends Component {
     this.deletePouchDoc(contact)
   }
 
-  chooseRevA (contact) {
+  getConflictRevisions (contact) {
+    // contactMe = contact
     console.log('### choose rev a ', contact)
+    // To fetch the losing revision, you simply get() it using the rev option
+    // localDB.get(contact.id, {rev: '2-y'}).then(function (doc) {
+    localDB.get(contact.id, {rev: contact.conflicts[0]}).then(function (doc) {
+
+      // do something with the doc
+    }).catch(function (err) {
+      console.log(err)
+    })
   }
-  chooseRevB (contact) {
-    console.log('### choose rev b ', contact)
+
+  chooseRev (contact) {
+    // remove the losing revision
+    localDB.remove(contact._id, contact._rev).then(function (doc) {
+      // yay, we're done
+    }).catch(function (err) {
+      console.log(err)
+      // handle any errors
+    })
   }
 
   toggleEdit (contact) {
@@ -170,9 +191,8 @@ class Contacts extends Component {
           handleGoToEdit={this.toggleEdit.bind(this, null)} />
 
         <Modal
-          contact={{ name: 'test', email: 'zuzu', phone: '1234' }}
-          chooseRevA={this.chooseRevA}
-          chooseRevB={this.chooseRevB} />
+          contact={{ _id: '11', name: 'test', email: 'zuzu', phone: '1234', _rev: '2-x', conflicts: ['2-y'] }}
+          chooseRev={this.chooseRev.bind(this)} />
 
         {editView.isOpen
           ? <ContactForm
