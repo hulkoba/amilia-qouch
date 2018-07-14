@@ -33,15 +33,19 @@ class Contacts extends Component {
     })
   }
 
+  componentWillUnmount () {
+    localDB.sync().cancel()
+  }
+
   componentDidMount () {
     this.getPouchDocs()
     localDB.sync(remoteDB, {
       live: true,
       since: 'now',
-      include_docs: true
-      // retry: true
+      include_docs: true,
+      retry: true
     }).on('change', change => {
-      console.log('something changed!')
+      console.log(change, 'changed!')
       this.getPouchDocs()
     })
       .on('paused', info => console.log('replication paused.'))
@@ -57,23 +61,32 @@ class Contacts extends Component {
 
   // --------------------   Pouch section  ---------------------------
   async getPouchDocs () {
+    console.log('### get pouch docs')
     try {
       const completeContacts = await localDB.allDocs({
         include_docs: true,
         conflicts: true // include conflict information in the _conflicts field of a doc.
       })
       const contacts = completeContacts.rows.map(c => c.doc)
-      console.log('getting ' + contacts.length + ' contacts from PouchDB.')
 
-      this.setState((prevState) => {
-        if (prevState.contacts !== contacts) {
-          return { contacts }
-        }
-      })
+      // check if there are conflict revisions
+      const conflictedContact = contacts.find(contact => contact._conflicts)
+      console.log('### conflictedContact', conflictedContact)
+      if (conflictedContact) {
+        this.getConflictRevisions({conflictedContact})
+      } else {
+        console.log('getting ' + contacts.length + ' contacts from PouchDB.')
+
+        this.setState((prevState) => {
+          if (prevState.contacts !== contacts) {
+            return { contacts }
+          }
+        })
+      }
     } catch (err) {
       if (err.message === 'Document update conflict') {
         // show Modal
-        this.getConflictRevisions(err.docId)
+        this.getConflictRevisions({contactID: err.docId})
       }
       console.log(err)
     }
@@ -93,7 +106,7 @@ class Contacts extends Component {
       this.getPouchDocs()
     } catch (err) {
       if (err.message === 'Document update conflict') {
-        this.getConflictRevisions(err.docId)
+        this.getConflictRevisions({contactID: err.docId})
       }
       console.log(err)
     }
@@ -110,7 +123,7 @@ class Contacts extends Component {
       this.getPouchDocs()
     } catch (err) {
       if (err.message === 'Document update conflict') {
-        this.getConflictRevisions(err.docId)
+        this.getConflictRevisions({contactID: err.docId})
       }
       console.log(err)
     }
@@ -121,7 +134,7 @@ class Contacts extends Component {
       localDB.remove(contact)
     } catch (err) {
       if (err.message === 'Document update conflict') {
-        this.getConflictRevisions(err.docId)
+        this.getConflictRevisions({contactID: err.docId})
       }
     } finally {
       this.getPouchDocs()
@@ -152,25 +165,31 @@ class Contacts extends Component {
     this.deletePouchDoc(contact)
   }
 
-  async getConflictRevisions (contactID) {
+  async getConflictRevisions ({contactID, conflictedContact}) {
     // contactMe = contact
-    console.log('### choose rev a ', contactID)
-    const contactMe = await localDB.get(contactID)
+    console.log('### get conflict revisions ', contactID)
+    let contactMe = ''
+    if (conflictedContact) {
+      contactMe = conflictedContact
+    } else {
+      contactMe = await localDB.get(contactID, {
+        conflicts: true // include conflict information in the _conflicts field of a doc.
+      })
+    }
+    console.log('### contactMe', contactMe)
     // To fetch the losing revision, you simply get() it using the rev option
     // localDB.get(contact.id, {rev: '2-y'}).then(function (doc) {
-    localDB.get(contactID, {rev: contactMe.conflicts[0]}).then(function (doc) {
-      this.setState(() => {
-        return {
-          modalView: {
-            hasConflict: true,
-            contactMe,
-            contactYou: doc
-          }
+    const contactYou = await localDB.get(contactMe._id, {rev: contactMe._conflicts[0]})
+    console.log('### contactYou', contactYou)
+
+    this.setState(() => {
+      return {
+        modalView: {
+          hasConflict: true,
+          contactMe,
+          contactYou
         }
-      })
-      // do something with the doc
-    }).catch(function (err) {
-      console.log(err)
+      }
     })
   }
 
@@ -189,6 +208,7 @@ class Contacts extends Component {
         }
       }
     })
+    this.getPouchDocs()
   }
 
   toggleEdit (contact) {
@@ -210,17 +230,15 @@ class Contacts extends Component {
     const { contacts, editView, modalView } = this.state
     return (
       <div>
-        <Header
-          isOpen={editView.isOpen}
-          handleGoToEdit={this.toggleEdit.bind(this, null)} />
-
-        {modalView.hasConflict &&
-          <Modal
+        {modalView.hasConflict
+          ? <Modal
             contactMe={modalView.contactMe}
             contactYou={modalView.contactYou}
             chooseRev={this.chooseRev.bind(this)} />
+          : <Header
+            isOpen={editView.isOpen}
+            handleGoToEdit={this.toggleEdit.bind(this, null)} />
         }
-
         {editView.isOpen
           ? <ContactForm
             addOrEditContact={this.addContact}
@@ -233,6 +251,7 @@ class Contacts extends Component {
             handleOnDeleteClick={this.deleteContact}
           />
         }
+
       </div>
     )
   }

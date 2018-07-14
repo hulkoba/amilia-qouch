@@ -5,7 +5,7 @@ import '../main.css'
 const Modal = ({contactMe, contactYou, chooseRev}) => (
   <div className='modal'>
     <h1 className='modal-title'>
-      Es gibt einen Konflikt bei Kontakt {contactMe.name}<br />
+      Es gibt einen Konflikt bei Kontakt <span className='red'>{contactMe.name}</span><br />
       Welche Version möchtest du behalten?
     </h1>
 
@@ -13,8 +13,8 @@ const Modal = ({contactMe, contactYou, chooseRev}) => (
       <p>Eingehende Änderung</p>
       <button
         className='rev-btn blue'
-        onClick={this.chooseRev.bind(this, contactMe)}>
-        <p>Kontakt: {JSON.stringify(contactYou)}</p>
+        onClick={chooseRev.bind(this, contactMe)}>
+        <p>Kontakt: {JSON.stringify({name: contactYou.name, email: contactYou.email, phone: contactYou.phone, id: contactYou._id})}</p>
       </button>
     </div>
 
@@ -22,8 +22,8 @@ const Modal = ({contactMe, contactYou, chooseRev}) => (
       <p>Deine Änderung</p>
       <button
         className='rev-btn lila'
-        onClick={this.chooseRev.bind(this, contactYou)}>
-        <p>Kontakt: {JSON.stringify(contactMe)}</p>
+        onClick={chooseRev.bind(this, contactYou)}>
+        <p>Kontakt: {JSON.stringify({name: contactMe.name, email: contactMe.email, phone: contactMe.phone, id: contactMe._id})}</p>
       </button>
     </div>
   </div>

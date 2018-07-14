@@ -76,8 +76,8 @@ body {
   border-color: deepskyblue;
 }
 .lila {
-  background-color: gold;
-  border-color: gold;
+  background-color: slateblue;
+  border-color: slateblue;
 }
 .rev-btn > p {
   font-size: 16pt;
@@ -112,7 +112,7 @@ body {
 
 .modal {
   position: absolute;
-  top: 50%;
+  top: 44%;
   left: 50%;
   transform: translate(-50%, -50%);
   border: 7px red solid;
@@ -121,8 +121,9 @@ body {
   overflow: hidden;
   outline: 0;
   padding: 22px;
-  width: 77vw;
+  width: 63%;
   margin: 0 auto;
+  box-shadow: 22px 33px 111px 333px rgba(121,98,237,0.7);
 }
 @media (max-width: 1500px) {
   body {
