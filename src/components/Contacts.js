@@ -6,6 +6,7 @@ import Modal from './Modal'
 import ContactList from './ContactList'
 import ContactForm from './ContactForm'
 
+PouchDB.plugin(require('pouchdb-upsert'))
 const localDB = new PouchDB('contacts')
 const remoteDB = new PouchDB('http://admin:admin@127.0.0.1:5984/contacts')
 
@@ -22,7 +23,8 @@ class Contacts extends Component {
         contactMe: '',
         contactYou: ''
       },
-      contacts: []
+      contacts: [],
+      lastEdited: {}
     }
 
     localDB.info().then(function (info) {
@@ -38,10 +40,8 @@ class Contacts extends Component {
   }
 
   componentDidMount () {
-    this.getPouchDocs()
     localDB.sync(remoteDB, {
       live: true,
-      since: 'now',
       include_docs: true,
       retry: true
     }).on('change', change => {
@@ -49,10 +49,14 @@ class Contacts extends Component {
       this.getPouchDocs()
     })
       .on('paused', info => console.log('replication paused.'))
-      .on('complete', info => console.log('yay, we are in sync!'))
-      .on('active', info => console.log('replication resumed.'))
+      .on('active', info => {
+        console.log('replication resumed.')
+        this.getPouchDocs()
+      })
       .on('denied', info => console.log('+++ DENIED +++', info))
       .on('error', err => console.log('+++ ERROR ERROR ERROR +++.', err))
+
+    this.getPouchDocs()
 
     this.toggleEdit = this.toggleEdit.bind(this)
     this.addContact = this.addContact.bind(this)
@@ -71,9 +75,10 @@ class Contacts extends Component {
 
       // check if there are conflict revisions
       const conflictedContact = contacts.find(contact => contact._conflicts)
-      console.log('### conflictedContact', conflictedContact)
+
       if (conflictedContact) {
-        this.getConflictRevisions({conflictedContact})
+        console.log('### conflictedContact', conflictedContact)
+        this.getConflictRevisions(conflictedContact)
       } else {
         console.log('getting ' + contacts.length + ' contacts from PouchDB.')
 
@@ -84,65 +89,51 @@ class Contacts extends Component {
         })
       }
     } catch (err) {
-      if (err.message === 'Document update conflict') {
-        // show Modal
-        this.getConflictRevisions({contactID: err.docId})
-      }
       console.log(err)
     }
   }
 
   async addPouchDoc (contact) {
-    const c = {
-      ...contact,
-      _id: new Date().toISOString()
-    }
     try {
-      await localDB.put({
-        ...contact,
-        _id: new Date().toISOString()
-      })
-      console.log(c.name + ' added to PouchDB.')
+      const id = new Date().toISOString()
+      await localDB.upsert(id, function () { return contact })
+      console.log(contact.name + ' added to PouchDB.')
+
       this.getPouchDocs()
     } catch (err) {
-      if (err.message === 'Document update conflict') {
-        this.getConflictRevisions({contactID: err.docId})
-      }
+      // error (not a 404 or 409)
       console.log(err)
     }
   }
 
   async editPouchDoc (contact) {
     try {
-      let doc = await localDB.get(contact._id, {
-        conflicts: true // include conflict information in the _conflicts field of a doc.
+      await localDB.upsert(contact._id, function (doc) {
+        console.log(doc.name + ' edited in PouchDB.')
+        return {...contact}
       })
-      doc = {...contact}
-      await localDB.put(doc)
-      console.log(doc.name + ' edited in PouchDB.')
+
       this.getPouchDocs()
     } catch (err) {
-      if (err.message === 'Document update conflict') {
-        this.getConflictRevisions({contactID: err.docId})
-      }
       console.log(err)
     }
   }
 
   async deletePouchDoc (contact) {
     try {
-      localDB.remove(contact)
-    } catch (err) {
-      if (err.message === 'Document update conflict') {
-        this.getConflictRevisions({contactID: err.docId})
-      }
-    } finally {
+      await localDB.upsert(contact._id, function (doc) {
+        console.log(doc.name + ' removed from PouchDB.')
+        if (!doc._deleted) {
+          doc._deleted = true
+          return doc
+        }
+
+        return false // don't update the doc
+      })
       this.getPouchDocs()
+    } catch (err) {
+      console.log(err)
     }
-    // const doc = await localDB.get(contact._id)
-    // doc._deleted = true
-    // await localDB.put(doc)
-    // console.log(contact.name + ' gets deleted')
   }
   // --------------------   Pouch section end  -------------------------
 
@@ -156,6 +147,8 @@ class Contacts extends Component {
       this.editPouchDoc(contact)
     }
 
+    this.setState(() => ({lastEdited: contact}))
+
     // go back to listView
     this.toggleEdit()
   }
@@ -165,22 +158,24 @@ class Contacts extends Component {
     this.deletePouchDoc(contact)
   }
 
-  async getConflictRevisions ({contactID, conflictedContact}) {
-    // contactMe = contact
-    console.log('### get conflict revisions ', contactID)
-    let contactMe = ''
-    if (conflictedContact) {
+  async getConflictRevisions (conflictedContact) {
+    console.log('### get conflict revisions ', conflictedContact)
+
+    let contactMe, contactYou
+    if (conflictedContact.name === this.state.lastEdited.name &&
+    conflictedContact.phone === this.state.lastEdited.phone &&
+    conflictedContact.email === this.state.lastEdited.email) {
       contactMe = conflictedContact
+      // To fetch the losing revision, you simply get() it using the rev option
+      contactYou = await localDB.get(conflictedContact._id, {
+        rev: conflictedContact._conflicts[0]
+      })
     } else {
-      contactMe = await localDB.get(contactID, {
-        conflicts: true // include conflict information in the _conflicts field of a doc.
+      contactYou = conflictedContact
+      contactMe = await localDB.get(conflictedContact._id, {
+        rev: conflictedContact._conflicts[0]
       })
     }
-    console.log('### contactMe', contactMe)
-    // To fetch the losing revision, you simply get() it using the rev option
-    // localDB.get(contact.id, {rev: '2-y'}).then(function (doc) {
-    const contactYou = await localDB.get(contactMe._id, {rev: contactMe._conflicts[0]})
-    console.log('### contactYou', contactYou)
 
     this.setState(() => {
       return {
