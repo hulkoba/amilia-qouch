@@ -193,14 +193,10 @@ class Contacts extends Component {
     })
   }
 
-  chooseRev (contact) {
+  async chooseRev (contact) {
     // remove the losing revision
-    localDB.remove(contact._id, contact._rev).then(function (doc) {
-      // yay, we're done
-    }).catch(function (err) {
-      console.log(err)
-      // handle any errors
-    })
+    await localDB.remove(contact._id, contact._rev)
+
     this.setState(() => {
       return {
         modalView: {
@@ -230,15 +226,17 @@ class Contacts extends Component {
     const { contacts, editView, modalView } = this.state
     return (
       <div>
-        {modalView.hasConflict
-          ? <Modal
+        <Header
+          isOpen={editView.isOpen}
+          handleGoToEdit={this.toggleEdit.bind(this, null)} />
+
+        {modalView.hasConflict &&
+          <Modal
             contactMe={modalView.contactMe}
             contactYou={modalView.contactYou}
             chooseRev={this.chooseRev.bind(this)} />
-          : <Header
-            isOpen={editView.isOpen}
-            handleGoToEdit={this.toggleEdit.bind(this, null)} />
         }
+
         {editView.isOpen
           ? <ContactForm
             addOrEditContact={this.addContact}
@@ -248,8 +246,7 @@ class Contacts extends Component {
           : <ContactList
             contacts={contacts}
             handleOnEditClick={this.toggleEdit}
-            handleOnDeleteClick={this.deleteContact}
-          />
+            handleOnDeleteClick={this.deleteContact} />
         }
 
       </div>
