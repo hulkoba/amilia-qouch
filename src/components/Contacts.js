@@ -4,7 +4,7 @@ import PouchDB from 'pouchdb'
 import Header from './Header'
 import Modal from './Modal'
 import ContactList from './ContactList'
-import ContactForm from './ContactForm'
+import FormContainer from './FormContainer'
 
 PouchDB.plugin(require('pouchdb-upsert'))
 const localDB = new PouchDB('contacts')
@@ -233,7 +233,7 @@ class Contacts extends Component {
         }
 
         {editView.isOpen
-          ? <ContactForm
+          ? <FormContainer
             addOrEditContact={this.addContact}
             handleCancel={this.toggleEdit.bind(this, null)}
             contact={editView.contact} />
