@@ -60,6 +60,7 @@ class Contacts extends Component {
 
     this.toggleEdit = this.toggleEdit.bind(this)
     this.addContact = this.addContact.bind(this)
+    this.editContact = this.editContact.bind(this)
     this.deleteContact = this.deleteContact.bind(this)
   }
 
@@ -137,18 +138,20 @@ class Contacts extends Component {
   }
   // --------------------   Pouch section end  -------------------------
 
-  // add or edit contact
   addContact (contact) {
-    if (!contact._id) {
-      console.log('### add contact', contact)
-      this.addPouchDoc(contact)
-    } else {
-      console.log('### edit contact', contact)
-      this.editPouchDoc(contact)
-    }
+    console.log('### add contact', contact)
+    this.addPouchDoc(contact)
 
     this.setState(() => ({lastEdited: contact}))
+    // go back to listView
+    this.toggleEdit()
+  }
 
+  editContact (contact) {
+    console.log('### edit contact', contact)
+    this.editPouchDoc(contact)
+
+    this.setState(() => ({lastEdited: contact}))
     // go back to listView
     this.toggleEdit()
   }
@@ -234,7 +237,8 @@ class Contacts extends Component {
 
         {editView.isOpen
           ? <FormContainer
-            addOrEditContact={this.addContact}
+            addContact={this.addContact}
+            editContact={this.editContact}
             handleCancel={this.toggleEdit.bind(this, null)}
             contact={editView.contact} />
 

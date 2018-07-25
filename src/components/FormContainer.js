@@ -32,7 +32,11 @@ class FormContainer extends Component {
 
   handleSubmit (event) {
     event.preventDefault()
-    this.props.addOrEditContact(this.state.contact)
+    if (!this.state.contact._id) {
+      this.props.addContact(this.state.contact)
+    } else {
+      this.props.editContact(this.state.contact)
+    }
   }
 
   render () {
