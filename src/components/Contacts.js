@@ -44,15 +44,9 @@ class Contacts extends Component {
       live: true,
       include_docs: true,
       retry: true
-    }).on('change', change => {
-      console.log(change, 'changed!')
-      this.getPouchDocs()
-    })
+    }).on('change', change => console.log(change, 'changed!'))
       .on('paused', info => console.log('replication paused.'))
-      .on('active', info => {
-        console.log('replication resumed.')
-        this.getPouchDocs()
-      })
+      .on('active', info => console.log('replication resumed.'))
       .on('denied', info => console.log('+++ DENIED +++', info))
       .on('error', err => console.log('+++ ERROR ERROR ERROR +++.', err))
 
@@ -100,6 +94,7 @@ class Contacts extends Component {
       await localDB.upsert(id, function () { return contact })
       console.log(contact.name + ' added to PouchDB.')
 
+      // update state
       this.getPouchDocs()
     } catch (err) {
       // error (not a 404 or 409)
@@ -114,6 +109,7 @@ class Contacts extends Component {
         return {...contact}
       })
 
+      // update state
       this.getPouchDocs()
     } catch (err) {
       console.log(err)
@@ -131,6 +127,8 @@ class Contacts extends Component {
 
         return false // don't update the doc
       })
+
+      // update state
       this.getPouchDocs()
     } catch (err) {
       console.log(err)
@@ -169,7 +167,7 @@ class Contacts extends Component {
     conflictedContact.phone === this.state.lastEdited.phone &&
     conflictedContact.email === this.state.lastEdited.email) {
       contactMe = conflictedContact
-      // To fetch the losing revision, you simply get() it using the rev option
+      // To fetch the losing revision, simply get() it using the rev option
       contactYou = await localDB.get(conflictedContact._id, {
         rev: conflictedContact._conflicts[0]
       })
