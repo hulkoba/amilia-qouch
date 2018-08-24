@@ -43,7 +43,12 @@ class ContactsContainer extends Component {
       live: true,
       include_docs: true,
       retry: true
-    }).on('change', change => console.log(change, 'changed!'))
+    }).on('change', change => {
+      console.log(change, 'changed!')
+      if (change.direction === 'pull') {
+        this.getPouchDocs()
+      }
+    })
       .on('paused', info => console.log('replication paused.'))
       .on('active', info => console.log('replication resumed.'))
       .on('denied', info => console.log('+++ DENIED +++', info))
@@ -55,14 +60,6 @@ class ContactsContainer extends Component {
     this.addContact = this.addContact.bind(this)
     this.editContact = this.editContact.bind(this)
     this.deleteContact = this.deleteContact.bind(this)
-  }
-
-  shouldComponentUpdate (nextProps, nextState) {
-    if ((nextState.contacts === this.state.contacts) &&
-      (nextState.editView.isOpen === this.state.editView.isOpen)) {
-      return false
-    }
-    return true
   }
 
   // --------------------   Pouch section  ---------------------------
